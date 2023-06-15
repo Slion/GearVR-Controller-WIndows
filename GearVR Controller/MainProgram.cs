@@ -366,7 +366,7 @@ namespace GearVR_Controller
                     // We either scroll vertically or horizontally not both
                     && absDeltaY > absDeltaX)
                 {
-                    SendInput("VWheel", sensorData.Delta_Y);
+                    SendInput("VWheel", 0-sensorData.Delta_Y);
                     consumedX = true;
                     consumedY = true;
                 }
