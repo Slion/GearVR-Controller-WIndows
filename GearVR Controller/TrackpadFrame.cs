@@ -15,6 +15,13 @@ namespace GearVR_Controller
         public Vector Acceleration;
         public DateTimeOffset Timestamp;
         public double Time;
+        public bool IsDown;
+        public bool IsUp { get { return Position.X == 0 && Position.Y == 0; } }
+
+        public bool IsMove
+        {
+            get { return !IsDown && !IsUp; }
+        }
 
         public TrackpadFrame()
         {
@@ -38,6 +45,7 @@ namespace GearVR_Controller
 
         public void Reset()
         {
+            IsDown = false;
             Position.X = 0;
             Position.Y = 0;
             Displacement.X = 0;
@@ -54,7 +62,21 @@ namespace GearVR_Controller
             //StringBuilder sb = new StringBuilder();
             //sb.AppendFormat("")
 
-            return $"Δt {Time*1000:0#}ms - P({Position.X},{Position.Y}) - D({Displacement.X},{Displacement.Y}) - V({Velocity.X},{Velocity.Y}) - A({Acceleration.X},{Acceleration.Y})"; 
+            var res = $"Δt {Time*1000:0#}ms - P({Position.X},{Position.Y}) - D({Displacement.X},{Displacement.Y}) - V({Velocity.X},{Velocity.Y}) - A({Acceleration.X},{Acceleration.Y})"; 
+            if (IsDown)
+            {
+                res = "Down - " + res;
+            } 
+            else if (IsUp)
+            {
+                res = "Up   - " + res;
+            }
+            else
+            {
+                res = "Move - " + res;
+            }
+
+            return res;
         }
     }
 }

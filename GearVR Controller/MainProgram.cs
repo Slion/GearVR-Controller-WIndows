@@ -21,6 +21,7 @@ namespace GearVR_Controller
 
         Queue<TrackpadFrame> iQueue = new Queue<TrackpadFrame>();
         TrackpadFrame previousFrame = null;
+        TrackpadFrame currentFrame = null;
 
 
         private static readonly MainProgram instance = new();
@@ -317,9 +318,76 @@ namespace GearVR_Controller
         }
 
 
-        bool iTrackingTouch = false;
 
         private void TrackPad()
+        {
+            if (!currentFrame.IsMove)
+            {
+                return;
+            }
+
+            //
+            int dX = (int)currentFrame.Displacement.X;
+            int dY = (int)currentFrame.Displacement.Y;
+            int absDeltaX = Math.Abs(dX);
+            int absDeltaY = Math.Abs(dY);
+
+            // Wheel trigger thresholds are intended to provide stability and avoid bounce back
+            // TODO: Put them in settings I guess
+            const int KWheelThresholdX = 10; // Horizontal
+            const int KWheelThresholdY = 10; // Vertical
+            const int KMouseThreshold = 20;
+            const double KMouseAcceleration = 0.1;
+
+            if (Settings.Default._UseWheel)
+            {
+                if ((absDeltaX > KWheelThresholdX)
+                    // We either scroll vertically or horizontally not both
+                    && absDeltaX > absDeltaY)
+                {
+                    SendInput("HWheel", dX);
+                }
+
+                if ((absDeltaY > KWheelThresholdY)
+                    // We either scroll vertically or horizontally not both
+                    && absDeltaY > absDeltaX)
+                {
+                    SendInput("VWheel", 0 - dY);
+                }
+            }
+            else
+            {
+                // Mouse pointer mouve
+                int offsetX = dX;
+                int offsetY = dY;
+                /*
+                if (absDeltaX > KMouseThreshold)
+                {
+                    offsetX *= (int)Math.Round(absDeltaX * KMouseAcceleration);
+                    //Debug.Print("AccX");
+                }
+
+                if (absDeltaY > KMouseThreshold)
+                {
+                    offsetY *= (int)Math.Round(absDeltaY * KMouseAcceleration);
+                    //Debug.Print("AccY");
+                }
+                */
+
+                if (offsetX != 0 || offsetY != 0)
+                {
+                    mouse_event(0x0001, offsetX, offsetY, 0, 0);
+                }
+            }
+
+        }
+
+        bool iTrackingTouch = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void TrackPadOld()
         {
             if (sensorData.AxisX == 0 && sensorData.AxisY == 0)
             {
@@ -518,8 +586,13 @@ namespace GearVR_Controller
                     frame.Compute(previousFrame);
                 }
 
-                iQueue.Enqueue(frame);
-                previousFrame = frame;
+                if (previousFrame == null || (previousFrame.Position.X == 0 && previousFrame.Position.Y == 0))
+                {
+                    frame.IsDown = true;
+                }
+
+                iQueue.Enqueue(frame);                
+                currentFrame = frame;
 
                 if (frame.Velocity.LengthSquared>0)
                 {
@@ -546,6 +619,8 @@ namespace GearVR_Controller
                 }
 
                 TrackPad();
+
+                previousFrame = frame;
             }
 
         }
