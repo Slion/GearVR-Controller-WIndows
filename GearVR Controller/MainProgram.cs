@@ -9,14 +9,19 @@ using Windows.Security.Cryptography;
 using Windows.Storage.Streams;
 using System.Diagnostics;
 using System.Timers;
-
-
+using System.Collections.Generic;
+using System.Windows;
+using System.Linq;
 
 namespace GearVR_Controller
 {
     public class MainProgram
     {
         readonly SensorData sensorData = SensorData.GetInstance();
+
+        Queue<TrackpadFrame> iQueue = new Queue<TrackpadFrame>();
+        TrackpadFrame previousFrame = null;
+
 
         private static readonly MainProgram instance = new();
         private MainProgram() { }
@@ -433,6 +438,12 @@ namespace GearVR_Controller
         }
 
         private readonly byte[] byte_values = new byte[60];
+
+        /// <summary>
+        /// That's where we receive data from the device, parse it and process it. 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
         private void SelectedCharacteristic_ValueChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
         {
             if (byte_values.Length == args.CharacteristicValue.Length)
@@ -469,6 +480,7 @@ namespace GearVR_Controller
                     sensorData.MagnetZ = (int)(((byte_values[36] << 8) + byte_values[37]) * 0.06);
                 }
 
+                // Why do we put those in our settings?
                 Settings.Default._TriggerButton = ((byte_values[58] & 1) == 1);
                 Settings.Default._HomeButton = ((byte_values[58] & 2) == 2);
                 Settings.Default._BackButton = ((byte_values[58] & 4) == 4);
@@ -479,6 +491,41 @@ namespace GearVR_Controller
 
                 sensorData.ShiftedX = (sensorData.AxisX - 157) + (sensorData.AxisY - 157);
                 sensorData.ShiftedY = sensorData.AxisY - sensorData.AxisX;
+
+                sensorData.Timestamp = args.Timestamp;
+
+
+                // Workout trackpad frame
+                TrackpadFrame frame = null;                
+
+                if (iQueue.Count<10)
+                {
+                    frame = new TrackpadFrame();
+                }
+                else
+                {
+                    frame = iQueue.Dequeue();
+                    frame.Reset();
+                }
+
+                frame.Position.X = sensorData.AxisX;
+                frame.Position.Y = sensorData.AxisY;
+                frame.Timestamp = args.Timestamp;                
+
+                //
+                if (previousFrame!=null)
+                {
+                    frame.Compute(previousFrame);
+                }
+
+                iQueue.Enqueue(frame);
+                previousFrame = frame;
+
+                if (frame.Velocity.LengthSquared>0)
+                {
+                    Debug.Print(frame.ToString());
+                }
+                //
 
                 //Buttons
                 TouchpadButton();

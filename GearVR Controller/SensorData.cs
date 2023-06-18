@@ -1,5 +1,10 @@
-﻿namespace GearVR_Controller
+﻿using System;
+
+namespace GearVR_Controller
 {
+    /// <summary>
+    /// TODO: Remove the previous data points prefixed with underscores and use other instances to track data history
+    /// </summary>
     public class SensorData : ObservableObject
     {
         private static readonly SensorData instance = new();
@@ -196,5 +201,7 @@
             get { return shiftedY; }
             set { shiftedY = value; }
         }
+
+        public DateTimeOffset Timestamp;
     }
 }
