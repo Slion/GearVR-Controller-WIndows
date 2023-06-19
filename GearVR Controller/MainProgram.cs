@@ -318,19 +318,41 @@ namespace GearVR_Controller
         }
 
 
+    double EaseInOutCubic(double x) {
+        return x< 0.5 ? 4 * x* x* x : 1 - Math.Pow(-2 * x + 2, 3) / 2;
+    }
 
-        private void TrackPad()
+    double EaseOutExpo(double x) {
+        return x >= 1 ? 1 : 1 - Math.Pow(2, -10 * x);
+    }
+
+
+    private void TrackPad()
         {
-            if (!currentFrame.IsMove)
+            if (!currentFrame.IsMove || currentFrame.Time<0.010)
             {
                 return;
             }
 
+
             //
             int dX = (int)currentFrame.Displacement.X;
             int dY = (int)currentFrame.Displacement.Y;
-            int absDeltaX = Math.Abs(dX);
-            int absDeltaY = Math.Abs(dY);
+
+
+            double vX = currentFrame.Velocity.X * currentFrame.Time;
+            double vY = currentFrame.Velocity.Y * currentFrame.Time;
+            //double aX = Math.Abs(currentFrame.Acceleration.X * 0.0001);
+            //double aY = Math.Abs(currentFrame.Acceleration.Y * 0.0001);
+
+            double aX = 0.2 * Math.Pow(dX, 0.55);
+            double aY = 0.2 * Math.Pow(dY, 0.55);
+
+            double absDeltaX = Math.Abs(dX);
+            double absDeltaY = Math.Abs(dY);
+
+            double ndX = absDeltaX / 15;
+            double ndY = absDeltaY / 15;
 
             // Wheel trigger thresholds are intended to provide stability and avoid bounce back
             // TODO: Put them in settings I guess
@@ -358,8 +380,50 @@ namespace GearVR_Controller
             else
             {
                 // Mouse pointer mouve
+                //int offsetX = (int)Math.Round(dX * (vX * vX * 0.01));
+                //int offsetY = (int)Math.Round(dY * (vY * vY * 0.01));
+
+
+                // At low speed we use raw offsets
+                // That gives maximum precission 
                 int offsetX = dX;
                 int offsetY = dY;
+
+                // At higher speeds we use the following equations
+                // See: https://www.desmos.com/calculator/srq7klovau
+                // TODO: We should really check the speed rather than the deplacement
+                if (absDeltaX > 30)
+                {
+                    offsetX = (int)Math.Round(dX * absDeltaX * 0.1);
+                }
+                
+                if (absDeltaY > 30)
+                {
+                    offsetY = (int)Math.Round(dY * absDeltaY * 0.1);
+                }
+
+
+
+                //int offsetX = (int)Math.Round(dX * 2.0);
+                //int offsetY = (int)Math.Round(dY * 2.0);
+                ///
+
+                //int offsetX = (int)Math.Round(Math.Pow(dX,2));
+                //int offsetY = (int)Math.Round(Math.Pow(dY,2));
+
+
+                //int offsetX = (int)Math.Round(dX * EaseOutExpo(ndX));
+                //int offsetY = (int)Math.Round(dY * EaseOutExpo(ndY));
+
+
+
+
+                //int offsetX = (int)Math.Round(dX * aX);
+                //int offsetY = (int)Math.Round(dY * aY);
+
+
+
+
                 /*
                 if (absDeltaX > KMouseThreshold)
                 {
@@ -376,6 +440,13 @@ namespace GearVR_Controller
 
                 if (offsetX != 0 || offsetY != 0)
                 {
+                    //Debug.Print($"A({aX},{aY})");
+
+                    Debug.Print($"O({offsetX};{offsetY})");
+
+                    //Debug.Print($"N({ndX};{ndY})");
+                    //Debug.Print($"E({EaseOutExpo(ndX)};{EaseOutExpo(ndY)})");
+
                     mouse_event(0x0001, offsetX, offsetY, 0, 0);
                 }
             }

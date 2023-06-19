@@ -40,7 +40,7 @@ namespace GearVR_Controller
             Velocity = Displacement / Time;
 
             // Compute acceleration
-            Acceleration = Velocity / Time;
+            Acceleration = (Velocity - aFrame.Velocity) / Time;
         }
 
         public void Reset()
@@ -62,7 +62,7 @@ namespace GearVR_Controller
             //StringBuilder sb = new StringBuilder();
             //sb.AppendFormat("")
 
-            var res = $"Δt {Time*1000:0#}ms - P({Position.X},{Position.Y}) - D({Displacement.X},{Displacement.Y}) - V({Velocity.X},{Velocity.Y}) - A({Acceleration.X},{Acceleration.Y})"; 
+            var res = $"Δt {Time*1000:0#}ms - P({Position.X};{Position.Y}) - D({Displacement.X};{Displacement.Y}) - V({Velocity.X};{Velocity.Y}) - A({Acceleration.X};{Acceleration.Y})"; 
             if (IsDown)
             {
                 res = "Down - " + res;
