@@ -342,7 +342,7 @@ namespace GearVR_Controller
             // TODO: Put them in settings I guess
             const int KWheelThresholdX = 10; // Horizontal
             const int KWheelThresholdY = 10; // Vertical
-            const int KMouseThreshold = 30;
+            const int KMouseThreshold = 45;
 
             if (Settings.Default._UseWheel)
             {
@@ -370,6 +370,7 @@ namespace GearVR_Controller
                 // At higher speeds we use the following equations
                 // See: https://www.desmos.com/calculator/srq7klovau
                 // TODO: We should really check the speed rather than the deplacement
+                // Maybe average it over several frames somehow?
                 if (absDeltaX > KMouseThreshold)
                 {
                     offsetX = (int)Math.Round(dX * absDeltaX * 0.1);
